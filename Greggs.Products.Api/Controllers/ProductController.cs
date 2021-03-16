@@ -21,7 +21,13 @@ namespace Greggs.Products.Api.Controllers
 
         private readonly ILogger<ProductController> _logger;
 
-        public ProductController(IDataAccess<Models.Product> repository, ICurrencyConverter currencyConverter, ILogger<ProductController> logger)
+        /// <summary>
+        /// The constructor.
+        /// </summary>
+        /// <param name="repository">The data access layer.</param>
+        /// <param name="currencyConverter">The currency converter.</param>
+        /// <param name="logger">The logger.</param>
+        public ProductController(IDataAccess<Product> repository, ICurrencyConverter currencyConverter, ILogger<ProductController> logger)
         {
             _logger = logger;
             _repository = repository;

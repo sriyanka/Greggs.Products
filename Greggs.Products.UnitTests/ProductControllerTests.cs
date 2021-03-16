@@ -28,16 +28,18 @@ namespace Greggs.Products.UnitTests
 
             var expected = new List<Api.Results.Product>()
                     {
-                        new Api.Results.Product {Name = "Sausage Roll", Price = 10},
-                        new Api.Results.Product {Name = "Vegan Sausage Roll", Price = 10},
-                        new Api.Results.Product {Name = "Steak Bake", Price = 10}
+                        new Api.Results.Product {Name = "Sausage Roll", Price = 2m},
+                        new Api.Results.Product {Name = "Vegan Sausage Roll", Price = 2.2m},
+                        new Api.Results.Product {Name = "Steak Bake", Price = 12.2m}
                     };
 
             var mockDataAccess = new Mock<IDataAccess<Product>>();
             mockDataAccess.Setup(s => s.List(pageStart, pageSize)).Returns(products);
 
             var mockCurrencyConverter = new Mock<ICurrencyConverter>();
-            mockCurrencyConverter.Setup(s => s.GetCurrencyValue(It.IsAny<decimal>(), It.IsAny<CurrencyType>())).Returns(10);
+            mockCurrencyConverter.Setup(s => s.GetCurrencyValue(1m, CurrencyType.Euros)).Returns(2m);
+            mockCurrencyConverter.Setup(s => s.GetCurrencyValue(1.1m, CurrencyType.Euros)).Returns(2.2m);
+            mockCurrencyConverter.Setup(s => s.GetCurrencyValue(1.2m, CurrencyType.Euros)).Returns(12.2m);
 
             var controller = new ProductController(mockDataAccess.Object, mockCurrencyConverter.Object, null);
 
