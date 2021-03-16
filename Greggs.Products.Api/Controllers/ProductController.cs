@@ -1,9 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
+﻿using Greggs.Products.Api.DataAccess;
+using Greggs.Products.Api.Extensions;
 using Greggs.Products.Api.Models;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Logging;
+using System;
+using System.Collections.Generic;
 
 namespace Greggs.Products.Api.Controllers
 {
@@ -11,31 +13,30 @@ namespace Greggs.Products.Api.Controllers
     [Route("[controller]")]
     public class ProductController : ControllerBase
     {
-        private static readonly string[] Products = new[]
-        {
-            "Sausage Roll", "Vegan Sausage Roll", "Steak Bake","Yum Yum", "Pink Jammie"
-        };
+        private readonly IDataAccess<Product> _repository;
 
         private readonly ILogger<ProductController> _logger;
 
-        public ProductController(ILogger<ProductController> logger)
+        public ProductController(IDataAccess<Models.Product> repository, ILogger<ProductController> logger)
         {
             _logger = logger;
+            _repository = repository;
         }
 
         [HttpGet]
-        public IEnumerable<Product> Get(int pageStart = 0, int pageSize = 5)
+        [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+        public IEnumerable<Results.Product> Get(int pageStart = 0, int pageSize = 5, bool inEuros = false)
         {
-            if (pageSize > Products.Length)
-                pageSize = Products.Length;
-            
-            var rng = new Random();
-            return Enumerable.Range(1, pageSize).Select(index => new Product
+            try
             {
-                PriceInPounds = rng.Next(0, 10),
-                Name = Products[rng.Next(Products.Length)]
-            })
-            .ToArray();
+                _logger?.LogInformation($"Getting Product Data for pageStart: {pageStart} and pageSize: {pageSize}");
+                return _repository.List(pageStart, pageSize).GetResult(inEuros);
+            }
+            catch(Exception exception)
+            {
+                _logger.LogError($"Exception occured: {exception.Message}");
+                throw; 
+            }
         }
     }
 }
