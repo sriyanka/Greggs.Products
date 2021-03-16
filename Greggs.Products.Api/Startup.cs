@@ -1,17 +1,11 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+using Greggs.Products.Api.Business;
 using Greggs.Products.Api.DataAccess;
 using Greggs.Products.Api.Models;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.HttpsPolicy;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
 
 namespace Greggs.Products.Api
 {
@@ -26,7 +20,8 @@ namespace Greggs.Products.Api
 
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddScoped<IDataAccess<Product>, ProductAccess>();
+            services.AddSingleton<IDataAccess<Product>, ProductAccess>();
+            services.AddSingleton<ICurrencyConverter, CurrencyConverter>();
 
             services.AddControllers();
 

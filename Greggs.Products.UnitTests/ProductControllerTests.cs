@@ -1,7 +1,9 @@
 using FluentAssertions;
+using Greggs.Products.Api.Business;
 using Greggs.Products.Api.Controllers;
 using Greggs.Products.Api.DataAccess;
 using Greggs.Products.Api.Models;
+using Microsoft.AspNetCore.Mvc;
 using Moq;
 using System;
 using System.Collections.Generic;
@@ -12,7 +14,7 @@ namespace Greggs.Products.UnitTests
     public class ProductControllerTests
     {
         [Fact]
-        public void Get_WhenNotInEuros()
+        public void Get_WhenValidCurrency_ReturnsResult()
         {
             //Arrange
             var pageStart = 1;
@@ -26,53 +28,61 @@ namespace Greggs.Products.UnitTests
 
             var expected = new List<Api.Results.Product>()
                     {
-                        new Api.Results.Product {Name = "Sausage Roll", Price = 1m},
-                        new Api.Results.Product {Name = "Vegan Sausage Roll", Price = 1.1m},
-                        new Api.Results.Product {Name = "Steak Bake", Price = 1.2m}
+                        new Api.Results.Product {Name = "Sausage Roll", Price = 10},
+                        new Api.Results.Product {Name = "Vegan Sausage Roll", Price = 10},
+                        new Api.Results.Product {Name = "Steak Bake", Price = 10}
                     };
 
             var mockDataAccess = new Mock<IDataAccess<Product>>();
             mockDataAccess.Setup(s => s.List(pageStart, pageSize)).Returns(products);
 
-            var controller = new ProductController(mockDataAccess.Object, null);
+            var mockCurrencyConverter = new Mock<ICurrencyConverter>();
+            mockCurrencyConverter.Setup(s => s.GetCurrencyValue(It.IsAny<decimal>(), It.IsAny<CurrencyType>())).Returns(10);
+
+            var controller = new ProductController(mockDataAccess.Object, mockCurrencyConverter.Object, null);
 
             //Act
-            var actual = controller.Get(pageStart, pageSize);
+            var actual = controller.Get(pageStart, pageSize, "Euros");
 
             //Assert
-            actual.Should().BeEquivalentTo(expected);
+            actual.Should().BeOfType<OkObjectResult>();
+
+            ((ObjectResult)actual).Value.Should().BeEquivalentTo(expected);
         }
 
         [Fact]
-        public void Get_WhenInEuros()
+        public void Get_WhenInValidCurrency_ReturnsBadRequest()
         {
             //Arrange
             var pageStart = 1;
             var pageSize = 10;
-            var products = new List<Product>()
-                    {
-                        new Product {Name = "Sausage Roll", PriceInPounds = 1m},
-                        new Product {Name = "Vegan Sausage Roll", PriceInPounds = 1.1m},
-                        new Product {Name = "Steak Bake", PriceInPounds = 1.2m}
-                    };
 
-            var expected = new List<Api.Results.Product>()
-                    {
-                        new Api.Results.Product {Name = "Sausage Roll", Price = 1.11m},
-                        new Api.Results.Product {Name = "Vegan Sausage Roll", Price = 1.221m},
-                        new Api.Results.Product {Name = "Steak Bake", Price = 1.332m}
-                    };
-
-            var mockDataAccess = new Mock<IDataAccess<Product>>();
-            mockDataAccess.Setup(s => s.List(pageStart, pageSize)).Returns(products);
-
-            var controller = new ProductController(mockDataAccess.Object, null);
+            var controller = new ProductController(null, null, null);
 
             //Act
-            var actual = controller.Get(pageStart, pageSize, true);
+            var actual = controller.Get(pageStart, pageSize, "Invalid");
 
             //Assert
-            actual.Should().BeEquivalentTo(expected);
+            actual.Should().BeOfType<BadRequestObjectResult>();
+        }
+
+        [Fact]
+        public void Get_WhenException_ReturnsBadRequest()
+        {
+            //Arrange
+            var pageStart = 1;
+            var pageSize = 10;
+
+            var mockDataAccess = new Mock<IDataAccess<Product>>();
+            mockDataAccess.Setup(s => s.List(pageStart, pageSize)).Throws(new Exception());
+
+            var controller = new ProductController(mockDataAccess.Object, null, null);
+
+            //Act
+            var actual = controller.Get(pageStart, pageSize, "Pounds");
+
+            //Assert
+            actual.Should().BeOfType<BadRequestObjectResult>();
         }
     }
 }
