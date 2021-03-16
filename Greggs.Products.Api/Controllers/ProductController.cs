@@ -9,6 +9,9 @@ using System.Linq;
 
 namespace Greggs.Products.Api.Controllers
 {
+    /// <summary>
+    /// Controller to get product information.
+    /// </summary>
     [ApiController]
     [Route("[controller]")]
     public class ProductController : ControllerBase
@@ -25,6 +28,13 @@ namespace Greggs.Products.Api.Controllers
             _currencyConverter = currencyConverter;
         }
 
+        /// <summary>
+        /// The endpoint to get product information.
+        /// </summary>
+        /// <param name="pageStart">The start page.</param>
+        /// <param name="pageSize">The page size.</param>
+        /// <param name="currency">The currencyType</param>
+        /// <returns></returns>
         [HttpGet]
         [ProducesResponseType(StatusCodes.Status200OK)]
         [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -37,11 +47,15 @@ namespace Greggs.Products.Api.Controllers
                 if (!Enum.TryParse(currency, out CurrencyType currencyType))
                     return BadRequest("Unsupported currency type.");
 
-                return Ok(_repository.List(pageStart, pageSize).Select(product => new Results.Product
-                {
-                    Name = product.Name,
-                    Price = _currencyConverter.GetCurrencyValue(product.PriceInPounds, currencyType)
-                }));
+                return Ok(
+                    _repository
+                    .List(pageStart, pageSize)
+                    .Select(product => new Results.Product
+                        {
+                            Name = product.Name,
+                            Price = _currencyConverter.GetCurrencyValue(product.PriceInPounds, currencyType)
+                        })
+                    );
             }
             catch (Exception exception)
             {
